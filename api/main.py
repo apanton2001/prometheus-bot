@@ -1,121 +1,153 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import json
-import subprocess
-from pathlib import Path
-import os
-import sys
+from fastapi.responses import JSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
+from prometheus_client import Counter, Histogram
+import time
+import logging
+from typing import Dict, Any
 
-# Add the project root to path so we can import trading modules
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+from core.config import get_settings
+from core.logger import setup_logging, get_api_logger
+from api.routes import (
+    auth,
+    market_analysis,
+    trading,
+    content,
+    users,
+    subscriptions
+)
+from api.middleware.rate_limit import RateLimitMiddleware
+from api.middleware.auth import AuthMiddleware
 
+# Initialize settings
+settings = get_settings()
+
+# Setup logging
+setup_logging()
+logger = get_api_logger()
+
+# Initialize FastAPI app
 app = FastAPI(
     title="Prometheus Bot API",
-    description="API for controlling and monitoring the Prometheus Bot",
-    version="0.1.0",
+    description="API for automated trading, content generation, and service delivery",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
-# Enable CORS
+# Prometheus metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request duration in seconds',
+    ['method', 'endpoint']
+)
+
+# Add middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with actual origins
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Models
-class BotStatus(BaseModel):
-    status: str
-    active_trades: int
-    total_profit: float
-    uptime: str
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(AuthMiddleware)
 
-class StartBot(BaseModel):
-    config_file: str = "trading/config/config.json"
-    strategy: str = "MomentumStrategy"
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(market_analysis.router, prefix="/api/market-analysis", tags=["Market Analysis"])
+app.include_router(trading.router, prefix="/api/trading", tags=["Trading"])
+app.include_router(content.router, prefix="/api/content", tags=["Content"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["Subscriptions"])
 
-class BacktestRequest(BaseModel):
-    strategy: str
-    timerange: str
-    pairs: list[str]
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """Add processing time to response headers and record metrics"""
+    start_time = time.time()
     
-# Routes
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to Prometheus Bot API",
-        "version": "0.1.0",
-        "status": "operational"
-    }
+    try:
+        response = await call_next(request)
+        
+        # Record metrics
+        process_time = time.time() - start_time
+        REQUEST_LATENCY.labels(
+            method=request.method,
+            endpoint=request.url.path
+        ).observe(process_time)
+        
+        REQUEST_COUNT.labels(
+            method=request.method,
+            endpoint=request.url.path,
+            status=response.status_code
+        ).inc()
+        
+        # Add processing time to response headers
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        raise
 
-@app.get("/health")
-async def health_check():
+@app.get("/api/health")
+async def health_check() -> Dict[str, Any]:
+    """Health check endpoint"""
     return {
         "status": "healthy",
-        "components": {
-            "api": "up",
-            "database": "up",
-            "trading_engine": "up"
-        }
+        "version": "1.0.0",
+        "timestamp": time.time()
     }
 
-@app.get("/status", response_model=BotStatus)
-async def get_status():
-    """Get the current status of the trading bot"""
-    # In production, this should check the actual bot status
+@app.get("/api/metrics")
+async def metrics() -> Dict[str, Any]:
+    """Basic metrics endpoint"""
     return {
-        "status": "running",
-        "active_trades": 2,
-        "total_profit": 105.25,
-        "uptime": "1d 3h 45m"
+        "requests_total": REQUEST_COUNT._value.sum(),
+        "request_latency_seconds": REQUEST_LATENCY._sum.sum() / REQUEST_LATENCY._count.sum() if REQUEST_LATENCY._count.sum() > 0 else 0
     }
 
-@app.post("/start")
-async def start_bot(data: StartBot):
-    """Start the trading bot with the specified configuration"""
-    try:
-        cmd = [
-            "freqtrade", 
-            "trade", 
-            "--config", 
-            data.config_file,
-            "--strategy",
-            data.strategy
-        ]
-        
-        # In a real implementation, you would handle this differently,
-        # potentially using a job queue or background task
-        subprocess.Popen(cmd)
-        return {"message": "Bot started successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to start bot: {str(e)}")
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Global exception handler for HTTP exceptions"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "path": request.url.path,
+            "method": request.method
+        }
+    )
 
-@app.post("/stop")
-async def stop_bot():
-    """Stop the trading bot"""
-    # This would need to gracefully stop the bot process
-    return {"message": "Bot stopped successfully"}
-
-@app.post("/backtest")
-async def run_backtest(data: BacktestRequest):
-    """Run a backtest with the specified parameters"""
-    try:
-        from trading.utils.backtest_helper import run_backtest
-        
-        # This would typically be handled as a background task
-        result = run_backtest(
-            data.strategy,
-            "trading/config/config.json",
-            data.timerange,
-            pairs=data.pairs
-        )
-        
-        return {"message": "Backtest completed successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backtest failed: {str(e)}")
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Global exception handler for unhandled exceptions"""
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "path": request.url.path,
+            "method": request.method
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    ) 
