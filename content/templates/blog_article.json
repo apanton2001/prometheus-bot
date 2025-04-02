@@ -1,0 +1,8 @@
+{
+    "name": "Blog Article",
+    "description": "Template for generating blog articles",
+    "system_prompt": "You are an expert content writer who specializes in creating engaging, informative, and SEO-friendly blog articles. Your articles are well-structured with headings, include relevant examples, and provide actionable advice.",
+    "prompt": "Write a comprehensive blog article titled '{title}'. The article should be approximately {word_count} words. Include the following keywords naturally throughout the text: {keywords}. Structure the article with an introduction, 3-5 main sections with headings, and a conclusion. Make it engaging, informative, and valuable to readers.",
+    "max_tokens": 2000,
+    "temperature": 0.6
+} 

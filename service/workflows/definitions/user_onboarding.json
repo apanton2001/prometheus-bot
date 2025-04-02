@@ -1,0 +1,60 @@
+{
+    "name": "User Onboarding Workflow",
+    "description": "Workflow for onboarding new users to the system",
+    "version": "1.0",
+    "context": {
+        "service_tier": "standard"
+    },
+    "steps": [
+        {
+            "id": "welcome_email",
+            "name": "Send Welcome Email",
+            "action": "send_welcome_email",
+            "params": {
+                "template": "welcome_basic"
+            },
+            "next_steps": [
+                {
+                    "step_id": "create_account"
+                }
+            ]
+        },
+        {
+            "id": "create_account",
+            "name": "Create User Account",
+            "action": "create_user_account",
+            "params": {
+                "role": "basic_user"
+            },
+            "next_steps": [
+                {
+                    "step_id": "provision_resources"
+                }
+            ]
+        },
+        {
+            "id": "provision_resources",
+            "name": "Provision User Resources",
+            "action": "provision_resources",
+            "params": {
+                "resource_type": "storage",
+                "quantity": 5
+            },
+            "next_steps": [
+                {
+                    "step_id": "send_confirmation",
+                    "condition": "is_provisioning_successful"
+                }
+            ]
+        },
+        {
+            "id": "send_confirmation",
+            "name": "Send Confirmation Email",
+            "action": "send_confirmation_email",
+            "params": {
+                "template": "welcome_completed"
+            }
+        }
+    ],
+    "start_step": "welcome_email"
+} 

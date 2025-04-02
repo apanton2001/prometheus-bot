@@ -1,0 +1,10 @@
+{
+    "name": "Social Media Post",
+    "description": "Template for generating social media posts",
+    "system_prompt": "You are a professional social media marketer known for creating engaging and high-performing content. Create content that fits the platform's best practices and will generate high engagement.",
+    "prompt": "Create a {tone} social media post for {platform} about {topic}. Make it engaging, shareable, and optimized for the platform. Include relevant hashtags where appropriate.",
+    "max_tokens": 250,
+    "temperature": 0.7,
+    "platforms": ["twitter", "instagram", "linkedin", "facebook"],
+    "tones": ["professional", "casual", "educational", "inspirational", "humorous"]
+} 
