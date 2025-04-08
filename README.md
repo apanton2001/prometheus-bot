@@ -1,5 +1,7 @@
 # Prometheus Trading Bot (MVP Stage)
 
+**Dashboard:** View the interactive implementation status dashboard (if running locally) at: [http://localhost:3000](http://localhost:3000)
+
 ## Project Goal
 
 To develop and operate a personal, automated algorithmic trading bot initially focused on US stocks (AAPL, TSLA) using the Alpaca brokerage API (Paper Trading environment). The ultimate goal is to incorporate machine learning models to identify potentially profitable trading opportunities based on various market indicators, starting with basic execution logic. *(Long-term goal includes potential expansion to options trading based on validated strategies).*
@@ -34,8 +36,8 @@ gantt
     Simple Trading Logic                    :done,    des2, 2025-01-01, 2025-01-07
     Paper Trading Order Submission          :done,    des3, 2025-01-01, 2025-01-07
     Basic Execution Loop                    :done,    des4, 2025-01-01, 2025-01-07
-    Historical data integration             :active,  des5, 2025-01-08, 2025-01-14
-    Performance logging                     :active,  des6, 2025-01-08, 2025-01-14
+    Historical data integration             :active,  des5, 2025-01-08, 2025-01-14 # Status based on last attempt
+    Performance logging                     :active,  des6, 2025-01-08, 2025-01-14 # Status based on last attempt
 
     section Phase 2: Backtesting Framework
     Develop a backtest engine               :planned, des7, 2025-01-15, 2025-01-21
@@ -229,4 +231,31 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For support, please open an issue in the GitHub repository. 
+For support, please open an issue in the GitHub repository.
+
+# Current Implementation State
+
+## Core Components
+- [x] Basic MA Crossover Logic
+- [x] Alpaca API Integration
+- [x] Position Management
+- [x] Risk Checks
+- [ ] Advanced Logging (In Progress)
+- [ ] Data Persistence (Planned)
+
+## Known Issues
+1. Historical Data Access:
+   - IEX limitations on historical bars
+   - SIP feed integration pending
+   - Alternative data sources being evaluated
+
+2. Performance Monitoring:
+   - Basic console logging implemented
+   - Structured logging in progress
+   - Dashboard template created
+
+## Next Steps
+1. Implement structured logging
+2. Add data persistence layer
+3. Create basic monitoring dashboard
+4. Enhance error handling 
