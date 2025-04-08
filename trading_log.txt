@@ -1,0 +1,26 @@
+2025-04-07 21:50:47,565 - INFO - Bot started
+2025-04-07 21:50:48,498 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:50:48,498 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:50:48,498 - INFO - Decision for AAPL: BUY
+2025-04-07 21:50:49,500 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:51:49,753 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:51:49,754 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:51:49,754 - INFO - Decision for AAPL: BUY
+2025-04-07 21:51:49,993 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:52:50,249 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:52:50,253 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:52:50,253 - INFO - Decision for AAPL: BUY
+2025-04-07 21:52:50,493 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:53:50,748 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:53:50,748 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:53:50,748 - INFO - Decision for AAPL: BUY
+2025-04-07 21:53:50,987 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:54:51,242 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:54:51,242 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:54:51,243 - INFO - Decision for AAPL: BUY
+2025-04-07 21:54:51,482 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:55:51,735 - INFO - Fetched 64 bars for AAPL
+2025-04-07 21:55:51,736 - INFO - Current Price: 182.68, Avg Price: 199.741346875
+2025-04-07 21:55:51,736 - INFO - Decision for AAPL: BUY
+2025-04-07 21:55:51,976 - INFO - Submitted buy order for 1 shares of AAPL
+2025-04-07 21:56:43,390 - INFO - Bot stopped by user
