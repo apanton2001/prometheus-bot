@@ -2,9 +2,9 @@
 
 ## Project Goal
 
-To develop and operate a personal, automated algorithmic trading bot initially focused on US stocks (AAPL, TSLA) using the Alpaca brokerage API (Paper Trading environment). The ultimate goal is to incorporate machine learning models to identify potentially profitable trading opportunities based on various market indicators, starting with basic execution logic.
+To develop and operate a personal, automated algorithmic trading bot initially focused on US stocks (AAPL, TSLA) using the Alpaca brokerage API (Paper Trading environment). The ultimate goal is to incorporate machine learning models to identify potentially profitable trading opportunities based on various market indicators, starting with basic execution logic. *(Long-term goal includes potential expansion to options trading based on validated strategies).*
 
-*(Self-Correction Note: While the long-term goal involves sophisticated ML, the immediate, validated state is much simpler).*
+*(Self-Correction Note: While the long-term goal involves sophisticated ML and potentially options, the immediate, validated state is much simpler).*
 
 ## Current Status (MVP v0.1 - Local Execution Verified)
 
@@ -56,6 +56,21 @@ gantt
     Performance monitoring                  :planned, des16, 2025-02-19, 2025-03-03
     Refinement                              :planned, des17, 2025-02-19, 2025-03-03
 ```
+
+### PHASE 3: ML Implementation (FUTURE - Blocked by Historical Data Access)
+
+### PHASE 4: Advanced Testing (FUTURE)
+
+### PHASE 5: Options Trading & Production Readiness (FUTURE)
+*   [⬜] **Options Data Integration:** Integrate fetch for options chains, IV, greeks (Requires appropriate API access/library, e.g., Alpaca Options API, CBOE DataShop).
+*   [⬜] **Options Strategy Formulation:** Develop and backtest options-specific strategies (e.g., straddles, spreads based on volatility/direction). Requires Options Data.
+*   [⬜] **Options Order Execution:** Implement logic to place options orders via Alpaca API (using specific contract symbols, order types).
+*   [⬜] **Options Risk Management:** Implement handling for assignment/exercise, specific options risk metrics.
+*   [⬜] Real-Time Processing Optimizations
+*   [⬜] Advanced Risk Management (Stop-loss, Daily Limits, Volatility Sizing - for chosen asset class)
+*   [⬜] Portfolio Integration (Handling multiple symbols/asset classes)
+*   [⬜] Monitoring Dashboard (UI - e.g., Supabase/Vercel)
+*   [⬜] Production Deployment (Cloud service, e.g., EC2/PythonAnywhere)
 
 ## Modified Setup Instructions
 
@@ -142,10 +157,18 @@ prometheus-bot/
 
 ## Known Issues / Challenges
 
-*   **Historical Data Access:** The primary blocker for implementing ML or robust backtesting remains the difficulty in accessing sufficient historical daily/intraday data for key periods via free/low-cost Alpaca feeds (IEX). `yfinance` was also unreliable due to network issues. **This MUST be resolved before ML/backtesting is feasible.**
-*   **Simple Logic:** The current BUY/SELL logic in `simple_alpaca_bot.py` is arbitrary and not a real strategy.
-*   **No Backtesting:** The current MVP has no backtesting capability.
-*   **Minimal Error Handling:** Needs improvement for API errors, data inconsistencies, etc.
+*   **Historical Data Access:** Primary blocker for ML/backtesting (Alpaca/IEX limited, yfinance network issues).
+*   **Simple Logic:** Current bot logic is basic MA crossover.
+*   **No Backtesting:** No robust backtesting implemented.
+*   **Options Complexity:** Options trading (data, strategy, execution) is significantly more complex than the current equity MVP and is deferred.
+
+## Alpaca Options API Capabilities (Future Reference)
+*   **Endpoints:** Dedicated endpoints exist (`/v2/options/contracts`) to fetch option contract details.
+*   **Trading:** Uses the standard Orders API (`/v2/orders`) but requires using the options contract symbol (e.g., `AAPL240119C00100000`) and options-specific validations (whole number qty, type market/limit, TIF=day).
+*   **Data:** Alpaca provides real-time and historical options data feeds (likely requires appropriate subscriptions beyond basic plan).
+*   **Activities:** Specific non-trade activities (NTAs) exist for exercise, assignment, expiry.
+*   **Exercise:** API endpoint available (`POST /v2/positions/{symbol_or_contract_id}/exercise`) to exercise contracts.
+*   *(Full details: <https://docs.alpaca.markets/docs/options-trading>)*
 
 ## Configuration
 
