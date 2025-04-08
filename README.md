@@ -8,84 +8,54 @@ To develop and operate a personal, automated algorithmic trading bot initially f
 
 ## Current Status (MVP v0.1 - Local Execution Verified)
 
-*   **Phase:** Phase 1 Complete - Local Execution Verified.
+*   **Phase:** Phase 1/2 - Incremental Enhancement. Basic MA Crossover logic with risk checks running locally.
 *   **Functionality:** The current active script (`simple_alpaca_bot.py`) successfully:
     *   Connects to the Alpaca Paper Trading API using environment variables.
-    *   Fetches the latest trade price for a hardcoded stock (AAPL).
-    *   Applies basic threshold logic (Buy > X, Sell < Y) to make a decision (BUY/SELL/HOLD).
-    *   Submits a market order for 1 share to the Alpaca paper trading account if a BUY/SELL decision is made.
+    *   Fetches a window of recent hourly bars for a hardcoded stock (AAPL) using a date range and the IEX feed.
+    *   Calculates Simple Moving Averages (10-hour, 30-hour).
+    *   Makes trading decisions (BUY/SELL/HOLD) based on MA Crossover logic.
+    *   Checks for existing positions before placing BUY/SELL orders.
+    *   Includes basic risk checks (buying power) before BUY orders.
+    *   Calculates basic position sizing.
+    *   Submits market orders to the Alpaca paper trading account if conditions are met.
     *   Runs in a loop with a configurable sleep timer.
-    *   Logs basic actions to the console.
-*   **Focus:** This existing MVP purely validates the end-to-end mechanics: API connection -> Data Fetch -> Basic Logic -> Paper Order Execution -> Logging. **It does NOT implement any sophisticated strategy or validated ML yet.** Previous attempts to validate ML hypotheses (e.g., tariff analysis) were **blocked by data availability issues.**
+    *   Logs actions to console and `trading_log.txt`.
+    *   Includes basic API retry logic.
+*   **Focus:** This existing MVP validates end-to-end mechanics with simple logic and basic risk management. **It does NOT implement sophisticated strategy or ML yet.** Previous ML validation attempts were **blocked by historical data access issues.**
 
-## Implementation Timeline & Phases (Planned - Not Yet Implemented)
+## Implementation Timeline & Phases (Planned & In Progress)
 
-*Note: This outlines the intended roadmap. Development beyond Phase 1 MVP is pending resolution of data access issues and validation of core trading hypotheses.*
+```mermaid
+gantt
+    title Prometheus Trading Bot Implementation Timeline
+    dateFormat  YYYY-MM-DD
+    section Phase 1: MVP Trading Bot
+    Basic API Connection & Price Fetching   :done,    des1, 2025-01-01, 2025-01-07
+    Simple Trading Logic                    :done,    des2, 2025-01-01, 2025-01-07
+    Paper Trading Order Submission          :done,    des3, 2025-01-01, 2025-01-07
+    Basic Execution Loop                    :done,    des4, 2025-01-01, 2025-01-07
+    Historical data integration             :active,  des5, 2025-01-08, 2025-01-14
+    Performance logging                     :active,  des6, 2025-01-08, 2025-01-14
 
-### PHASE 1: MVP Trading Bot (Weeks 1-2) - LARGELY COMPLETE (Local)
-- ✓ Basic API Connection & Price Fetching (`simple_alpaca_bot.py`)
-- ✓ Simple Trading Logic (Threshold-based in `simple_alpaca_bot.py`)
-- ✓ Paper Trading Order Submission (`simple_alpaca_bot.py`)
-- ✓ Basic Execution Loop (`simple_alpaca_bot.py`)
-- **Next Deliverables (Requires modifying `simple_alpaca_bot.py` or creating new structure):**
-  ```python
-  # Historical data integration (Placeholder)
-  def fetch_historical_data(symbol, start, end):
-      # TODO: Implement robust Alpaca historical data fetch (daily/hourly)
-      # Needs to handle potential data source limitations (IEX vs SIP)
-      pass
+    section Phase 2: Backtesting Framework
+    Develop a backtest engine               :planned, des7, 2025-01-15, 2025-01-21
+    Calculate performance metrics           :planned, des8, 2025-01-15, 2025-01-21
 
-  # Performance logging (Placeholder)
-  def log_performance(trade_details):
-      # TODO: Basic trade tracking to console or simple file/DB
-      pass
-  ```
+    section Phase 3: UI Development
+    Create a simple, informative dashboard  :planned, des9, 2025-01-22, 2025-02-04
 
-### PHASE 2: Backtesting Framework (Weeks 3-4) - FUTURE
-```python
-# Key Components (Placeholder):
-class BacktestEngine:
-    def __init__(self, strategy, data):
-        self.historical_data = data
-        self.strategy = strategy # Requires defining a strategy class
+    section Phase 4: Infrastructure
+    Setup deployment                        :planned, des10, 2025-02-05, 2025-02-18
+    Setup database                          :planned, des11, 2025-02-05, 2025-02-18
+    Setup automation                        :planned, des12, 2025-02-05, 2025-02-18
+    Setup API                               :planned, des13, 2025-02-05, 2025-02-18
+    Setup subscriptions                     :planned, des14, 2025-02-05, 2025-02-18
 
-    def run_backtest(self):
-        # TODO: Implement walk-forward or simple backtest loop
-        pass
-
-class PerformanceMetrics:
-    def calculate_metrics(self, trade_log):
-        # TODO: Calculate Sharpe ratio, drawdown, win rate, etc. from trade log
-        pass
+    section Phase 5: Testing & Launch
+    Beta testing                            :planned, des15, 2025-02-19, 2025-03-03
+    Performance monitoring                  :planned, des16, 2025-02-19, 2025-03-03
+    Refinement                              :planned, des17, 2025-02-19, 2025-03-03
 ```
-
-### PHASE 3: UI Development (Weeks 5-8) - FUTURE
-- Target: Simple, informative dashboard (potentially Raya-inspired).
-  ```typescript
-  // React/Next.js components (Placeholder)
-  interface DashboardProps {
-    performanceMetrics: Metrics; // From BacktestEngine/PerformanceMetrics
-    tradeHistory: Trade[]; // From Logger
-    // TODO: Implement basic data visualization (charts)
-  }
-  ```
-
-### PHASE 4: Infrastructure (Weeks 9-12) - FUTURE
-```typescript
-// Target Tech Stack Integration (Placeholder)
-const infrastructure = {
-    deployment: 'Vercel (for UI)', // Simple script might use PythonAnywhere/EC2/local cron
-    database: 'Supabase (Postgres)', // Alternative: Local SQLite first
-    automation: 'n8n / cron / EventBridge', // If needed for scheduling/workflows
-    api: 'Internal API (if UI needs it)', // Potentially FastAPI
-    subscriptions: 'Stripe (If productized)' // Not applicable for personal bot
-}
-```
-
-### PHASE 5: Testing & Launch (Weeks 13-16) - FUTURE
-- Beta Testing (Self-testing in paper/live micro).
-- Performance Monitoring (Requires logging/metrics).
-- Refinement based on paper trading results.
 
 ## Modified Setup Instructions
 
@@ -125,7 +95,7 @@ const infrastructure = {
     ```
     *(Note: Logging currently goes only to console. `tail` command requires a log file, which isn't implemented yet).*
 
-## Current Development Focus (Immediate Next Steps)
+## Current Development Focus
 
 1.  **Immediate Tasks (Based on completed MVP):**
     *   **Validate Basic Functionality:** Let `simple_alpaca_bot.py` run for a period (e.g., 1 hour) and confirm paper trades appear correctly in the Alpaca dashboard when thresholds are met.

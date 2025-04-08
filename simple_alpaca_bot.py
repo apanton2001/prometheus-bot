@@ -96,15 +96,11 @@ class TradingBot:
     def check_risk_limits(self, symbol):
         """Check if account status and limits allow trading."""
         try:
-            account = retry_api_call(lambda: self.api.get_account())
+            account = retry_api_call(lambda: self.api.get_account());
             if not account: logging.error("Risk Check: Could not fetch account info."); return False
-            if account.trading_blocked or account.account_blocked:
-                logging.critical(f"ACCOUNT BLOCKED! Trading blocked: {account.trading_blocked}, Account blocked: {account.account_blocked}")
-                return False
+            if account.trading_blocked or account.account_blocked: logging.critical(f"ACCOUNT BLOCKED!"); return False
             buying_power = float(account.buying_power)
-            if buying_power < MIN_BUYING_POWER:
-                logging.warning(f"Risk Check: Insufficient buying power ({buying_power:.2f} < {MIN_BUYING_POWER}). Blocking new BUYS.")
-                return False
+            if buying_power < MIN_BUYING_POWER: logging.warning(f"Risk Check: Low buying power ({buying_power:.2f} < {MIN_BUYING_POWER}). Blocking new BUYS."); return False
             # Skipping portfolio history check due to potential unreliability on paper/IEX
             # logging.warning("Risk Check: Portfolio history check for daily P&L is currently skipped.")
             return True # Passes checks available
@@ -112,8 +108,8 @@ class TradingBot:
 
     # --- Core Strategy & Execution ---
     def calculate_moving_averages(self, bars):
-        if bars is None or len(bars) < self.long_window: logging.warning(f"Insufficient data for MA calc."); return None
-        df = bars.copy()
+        if bars is None or len(bars) < self.long_window: logging.warning(f"Insufficient data ({len(bars) if bars is not None else 0}) for MA calc."); return None
+        df = bars.copy();
         try: df.loc[:, 'MA_short'] = df['close'].rolling(window=self.short_window).mean(); df.loc[:, 'MA_long'] = df['close'].rolling(window=self.long_window).mean(); return df
         except Exception as e: logging.error(f"Error calculating MAs: {e}"); return None
 
@@ -124,10 +120,11 @@ class TradingBot:
         try: current_short_ma = df_with_ma['MA_short'].iloc[-1]; current_long_ma = df_with_ma['MA_long'].iloc[-1]; prev_short_ma = df_with_ma['MA_short'].iloc[-2]; prev_long_ma = df_with_ma['MA_long'].iloc[-2]
         except IndexError: logging.warning("IndexError accessing MAs."); return 'HOLD'
         if pd.isna(current_short_ma) or pd.isna(current_long_ma) or pd.isna(prev_short_ma) or pd.isna(prev_long_ma): logging.debug("HOLD decision: NaN in MA values."); return 'HOLD'
-        logging.info(f"Latest Close: {df_with_ma['close'].iloc[-1]:.2f}, Short MA: {current_short_ma:.2f}, Long MA: {current_long_ma:.2f}")
-        if prev_short_ma <= prev_long_ma and current_short_ma > current_long_ma: logging.info("Golden Cross detected - Potential BUY signal"); return 'BUY'
-        elif prev_short_ma >= prev_long_ma and current_short_ma < current_long_ma: logging.info("Death Cross detected - Potential SELL signal"); return 'SELL'
-        return 'HOLD'
+        logging.info(f"Analysis Data - Latest Close: {df_with_ma['close'].iloc[-1]:.2f}, Short MA: {current_short_ma:.2f}, Long MA: {current_long_ma:.2f}, Prev Short: {prev_short_ma:.2f}, Prev Long: {prev_long_ma:.2f}")
+        if prev_short_ma <= prev_long_ma and current_short_ma > current_long_ma: logging.info("Decision Logic: Golden Cross (Short > Long) detected -> BUY signal"); return 'BUY'
+        elif prev_short_ma >= prev_long_ma and current_short_ma < current_long_ma: logging.info("Decision Logic: Death Cross (Short < Long) detected -> SELL signal"); return 'SELL'
+        elif current_short_ma < current_long_ma: logging.info("Decision Logic: HOLD (Short MA still below Long MA, no cross)"); return 'HOLD'
+        else: logging.info("Decision Logic: HOLD (Short MA still above Long MA, no cross)"); return 'HOLD'
 
     def get_recent_bars(self, symbol, lookback_bars=BAR_LOOKBACK, timeframe=BAR_TIMEFRAME):
         if not self.api: logging.error("API client missing."); return None
@@ -138,11 +135,12 @@ class TradingBot:
             if bars_df is None or bars_df.empty: logging.warning(f"No recent bars returned for {symbol}."); return None
             # Standardize index
             if isinstance(bars_df.index, pd.DatetimeIndex):
-                # CORRECTED if/else for timezone
+                # --- CORRECTED SYNTAX FOR IF/ELSE ---
                 if bars_df.index.tz is None:
                      bars_df.index = bars_df.index.tz_localize('UTC')
                 else:
                      bars_df.index = bars_df.index.tz_convert('UTC')
+                # --- END CORRECTION ---
             else:
                  bars_df=bars_df.reset_index(); ts_col='timestamp' if 'timestamp' in bars_df.columns else ('index' if 'index' in bars_df.columns else None);
                  if ts_col: bars_df.rename(columns={ts_col:'timestamp'},inplace=True); bars_df['timestamp']=pd.to_datetime(bars_df['timestamp'],utc=True); bars_df=bars_df.set_index('timestamp')
@@ -171,7 +169,6 @@ class TradingBot:
         logging.info("Starting trading bot with MA Crossover strategy and risk management...")
         print("Starting trading bot with MA Crossover strategy and risk management...")
         print("Press CTRL+C to stop.")
-        # --- This is the start of the main loop's try block ---
         while True:
             try: # <---- Start of the TRY for the main loop
                 can_buy = self.check_risk_limits(symbol)
@@ -182,7 +179,7 @@ class TradingBot:
                     if position: current_position = int(position.qty); logging.info(f"Current position: {current_position} {symbol}")
                 except tradeapi.rest.APIError as e:
                     if e.status_code == 404: logging.info(f"No current position in {symbol}")
-                    else: logging.error(f"APIError checking position: {e}")
+                    else: logging.error(f"APIError checking position (Code: {e.status_code}): {e}")
                 except Exception as e_pos: logging.error(f"Error checking position: {e_pos}")
                 bars = self.get_recent_bars(symbol, lookback_bars=BAR_LOOKBACK)
                 if bars is not None and not bars.empty:
@@ -212,7 +209,7 @@ class TradingBot:
             except KeyboardInterrupt:
                  logging.info("Bot stopped by user"); print("\nStopping..."); break
             except Exception as e:
-                 logging.error(f"Unhandled error: {str(e)}", exc_info=True); time.sleep(SLEEP_TIME_SECONDS)
+                 logging.error(f"Unhandled error: {str(e)}", exc_info=True); time.sleep(SLEEP_TIME_SECONDS) # Indent except blocks
 
 # --- Main Execution ---
 if __name__ == "__main__":
